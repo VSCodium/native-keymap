@@ -71,7 +71,7 @@ jobs:
             image: vscodium/vscodium-linux-build-agent:focal-ppc64le
           - slug: s390x
             npm_arch: s390x
-            image: vscodium/vscodium-linux-build-agent:jammy-s390x
+            image: vscodium/vscodium-linux-build-agent:focal-s390x
     env:
       TARGET_PLATFORM: linux
       PACKAGE_VERSION: ${{ needs.metadata.outputs.version }}
