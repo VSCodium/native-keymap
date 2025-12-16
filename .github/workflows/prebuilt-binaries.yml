@@ -10,7 +10,7 @@ on:
       publish:
         description: Publish
         required: false
-        default: true
+        default: false
         type: boolean
   push:
     tags:
@@ -129,8 +129,8 @@ jobs:
           node-version-file: '.nvmrc'
       - name: Install system dependencies
         run: |
-          apt-get update
-          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+          sudo apt-get update -y
+          DEBIAN_FRONTEND=noninteractive sudo apt-get install -y --no-install-recommends \
             build-essential \
             python3 \
             libx11-dev \

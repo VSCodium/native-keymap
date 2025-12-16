@@ -10,7 +10,7 @@ on:
       publish:
         description: Publish
         required: false
-        default: true
+        default: false
         type: boolean
   push:
     tags:
@@ -166,12 +166,12 @@ jobs:
           if [ "${{ matrix.deb_arch }}" != "amd64" ]; then
             dpkg --add-architecture ${{ matrix.deb_arch }}
           fi
-          apt-get update
+          sudo apt-get update -y
           PKGS="build-essential python3 pkg-config ninja-build libx11-dev:${{ matrix.deb_arch }} libxkbfile-dev:${{ matrix.deb_arch }} libkrb5-dev:${{ matrix.deb_arch }}"
           if [ -n "${{ matrix.toolchain_packages }}" ]; then
             PKGS="$PKGS ${{ matrix.toolchain_packages }}"
           fi
-          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends $PKGS
+          DEBIAN_FRONTEND=noninteractive sudo apt-get install -y --no-install-recommends $PKGS
       - name: Install npm dependencies
         run: npm install --no-fund --no-audit --ignore-scripts
       - name: Build native module (cross)
