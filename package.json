@@ -5,7 +5,7 @@
   "main": "index.js",
   "typings": "index.d.ts",
   "scripts": {
-    "install": "prebuild-install || node-gyp rebuild --release",
+    "install": "prebuild-install --verbose || node-gyp rebuild --release",
     "release": "release-it --no-increment",
     "test": "node test/test.js"
   },
