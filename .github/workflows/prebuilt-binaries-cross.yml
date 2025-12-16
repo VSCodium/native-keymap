@@ -335,10 +335,14 @@ jobs:
           mkdir -p release
           find collected-artifacts -type f -name '*.tar.gz*' -exec cp {} release/ \;
       - name: Publish package to npm
-        if: ${{ secrets.NPM_TOKEN != '' }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --access public
+        run: |
+          if [ -n "$NODE_AUTH_TOKEN" ]; then
+            npm publish --access public
+          else
+            echo "NPM token not present, skipping publish"
+          fi
       - name: Publish release assets
         uses: softprops/action-gh-release@v2
         with:
