@@ -22,6 +22,7 @@ permissions:
 
 env:
   PREBUILT_DIR: prebuilt-artifacts
+  PREBUILT_RUNTIME: node
 
 jobs:
   metadata:
@@ -98,8 +99,8 @@ jobs:
         with:
           name: native-keymap-${{ env.TARGET_PLATFORM }}-${{ matrix.slug }}
           path: |
-            ${{ env.PREBUILT_DIR }}/native-keymap-${{ env.PACKAGE_VERSION }}-${{ env.TARGET_PLATFORM }}-${{ matrix.slug }}.tar.gz
-            ${{ env.PREBUILT_DIR }}/native-keymap-${{ env.PACKAGE_VERSION }}-${{ env.TARGET_PLATFORM }}-${{ matrix.slug }}.tar.gz.sha256
+            ${{ env.PREBUILT_DIR }}/native-keymap-v${{ env.PACKAGE_VERSION }}-${{ env.PREBUILT_RUNTIME }}-v*-${{ env.TARGET_PLATFORM }}-${{ matrix.slug }}.tar.gz
+            ${{ env.PREBUILT_DIR }}/native-keymap-v${{ env.PACKAGE_VERSION }}-${{ env.PREBUILT_RUNTIME }}-v*-${{ env.TARGET_PLATFORM }}-${{ matrix.slug }}.tar.gz.sha256
 
   macos:
     name: macOS (${{ matrix.arch }})
@@ -132,8 +133,8 @@ jobs:
         with:
           name: native-keymap-${{ env.TARGET_PLATFORM }}-${{ matrix.arch }}
           path: |
-            ${{ env.PREBUILT_DIR }}/native-keymap-${{ env.PACKAGE_VERSION }}-${{ env.TARGET_PLATFORM }}-${{ matrix.arch }}.tar.gz
-            ${{ env.PREBUILT_DIR }}/native-keymap-${{ env.PACKAGE_VERSION }}-${{ env.TARGET_PLATFORM }}-${{ matrix.arch }}.tar.gz.sha256
+            ${{ env.PREBUILT_DIR }}/native-keymap-v${{ env.PACKAGE_VERSION }}-${{ env.PREBUILT_RUNTIME }}-v*-${{ env.TARGET_PLATFORM }}-${{ matrix.arch }}.tar.gz
+            ${{ env.PREBUILT_DIR }}/native-keymap-v${{ env.PACKAGE_VERSION }}-${{ env.PREBUILT_RUNTIME }}-v*-${{ env.TARGET_PLATFORM }}-${{ matrix.arch }}.tar.gz.sha256
 
   windows:
     name: Windows (${{ matrix.arch }})
@@ -170,8 +171,8 @@ jobs:
         with:
           name: native-keymap-${{ env.TARGET_PLATFORM }}-${{ matrix.arch }}
           path: |
-            ${{ env.PREBUILT_DIR }}/native-keymap-${{ env.PACKAGE_VERSION }}-${{ env.TARGET_PLATFORM }}-${{ matrix.arch }}.tar.gz
-            ${{ env.PREBUILT_DIR }}/native-keymap-${{ env.PACKAGE_VERSION }}-${{ env.TARGET_PLATFORM }}-${{ matrix.arch }}.tar.gz.sha256
+            ${{ env.PREBUILT_DIR }}/native-keymap-v${{ env.PACKAGE_VERSION }}-${{ env.PREBUILT_RUNTIME }}-v*-${{ env.TARGET_PLATFORM }}-${{ matrix.arch }}.tar.gz
+            ${{ env.PREBUILT_DIR }}/native-keymap-v${{ env.PACKAGE_VERSION }}-${{ env.PREBUILT_RUNTIME }}-v*-${{ env.TARGET_PLATFORM }}-${{ matrix.arch }}.tar.gz.sha256
 
   publish:
     name: Publish Release
