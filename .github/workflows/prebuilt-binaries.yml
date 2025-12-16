@@ -158,7 +158,7 @@ jobs:
             ${{ env.PREBUILT_DIR }}/native-keymap-${{ env.PACKAGE_VERSION }}-${{ env.TARGET_PLATFORM }}-${{ matrix.slug }}.tar.gz.sha256
 
   macos:
-    name: macOS (${{ matrix.vscode_arch }})
+    name: macOS (${{ matrix.arch }})
     needs: metadata
     runs-on: macos-14
     strategy:
@@ -178,21 +178,21 @@ jobs:
       - name: Build native module
         env:
           npm_config_build_from_source: true
-          npm_config_arch: ${{ matrix.vscode_arch }}
+          npm_config_arch: ${{ matrix.arch }}
         run: npx node-gyp rebuild
       - name: Package artifact
         run: |
           set -ex
-          mkdir -p "${PREBUILT_DIR}/${TARGET_PLATFORM}-${{ matrix.vscode_arch }}"
-          cp build/Release/keymapping.node "${PREBUILT_DIR}/${TARGET_PLATFORM}-${{ matrix.vscode_arch }}/keymapping.node"
-          tar -czf "${PREBUILT_DIR}/native-keymap-${PACKAGE_VERSION}-${TARGET_PLATFORM}-${{ matrix.vscode_arch }}.tar.gz" -C "${PREBUILT_DIR}/${TARGET_PLATFORM}-${{ matrix.vscode_arch }}" keymapping.node
-          (cd "${PREBUILT_DIR}" && shasum -a 256 "native-keymap-${PACKAGE_VERSION}-${TARGET_PLATFORM}-${{ matrix.vscode_arch }}.tar.gz" > "native-keymap-${PACKAGE_VERSION}-${TARGET_PLATFORM}-${{ matrix.vscode_arch }}.tar.gz.sha256")
+          mkdir -p "${PREBUILT_DIR}/${TARGET_PLATFORM}-${{ matrix.arch }}"
+          cp build/Release/keymapping.node "${PREBUILT_DIR}/${TARGET_PLATFORM}-${{ matrix.arch }}/keymapping.node"
+          tar -czf "${PREBUILT_DIR}/native-keymap-${PACKAGE_VERSION}-${TARGET_PLATFORM}-${{ matrix.arch }}.tar.gz" -C "${PREBUILT_DIR}/${TARGET_PLATFORM}-${{ matrix.arch }}" keymapping.node
+          (cd "${PREBUILT_DIR}" && shasum -a 256 "native-keymap-${PACKAGE_VERSION}-${TARGET_PLATFORM}-${{ matrix.arch }}.tar.gz" > "native-keymap-${PACKAGE_VERSION}-${TARGET_PLATFORM}-${{ matrix.arch }}.tar.gz.sha256")
       - uses: actions/upload-artifact@v4
         with:
-          name: native-keymap-${{ env.TARGET_PLATFORM }}-${{ matrix.vscode_arch }}
+          name: native-keymap-${{ env.TARGET_PLATFORM }}-${{ matrix.arch }}
           path: |
-            ${{ env.PREBUILT_DIR }}/native-keymap-${{ env.PACKAGE_VERSION }}-${{ env.TARGET_PLATFORM }}-${{ matrix.vscode_arch }}.tar.gz
-            ${{ env.PREBUILT_DIR }}/native-keymap-${{ env.PACKAGE_VERSION }}-${{ env.TARGET_PLATFORM }}-${{ matrix.vscode_arch }}.tar.gz.sha256
+            ${{ env.PREBUILT_DIR }}/native-keymap-${{ env.PACKAGE_VERSION }}-${{ env.TARGET_PLATFORM }}-${{ matrix.arch }}.tar.gz
+            ${{ env.PREBUILT_DIR }}/native-keymap-${{ env.PACKAGE_VERSION }}-${{ env.TARGET_PLATFORM }}-${{ matrix.arch }}.tar.gz.sha256
 
   windows:
     name: Windows (${{ matrix.arch }})
