@@ -8,17 +8,8 @@ TARGET_ARCH=${2:?'Target architecture is required'}
 PACKAGE_VERSION=${3:?'Package version is required'}
 BINARY_PATH=${4:-build/Release/keymapping.node}
 
-RUNTIME=${PREBUILT_RUNTIME:-node}
-NODE_ABI=${PREBUILT_NODE_ABI:-$(node -p "process.versions.modules" 2>/dev/null)}
-
-if [[ -z "$NODE_ABI" ]]; then
-  echo "Unable to determine Node ABI" >&2
-  exit 1
-fi
-
 DEST_DIR="${PREBUILT_DIR}/${TARGET_PLATFORM}-${TARGET_ARCH}"
-ARCHIVE_BASENAME="native-keymap-v${PACKAGE_VERSION}-${RUNTIME}-v${NODE_ABI}-${TARGET_PLATFORM}-${TARGET_ARCH}"
-ARCHIVE_NAME="${ARCHIVE_BASENAME}.tar.gz"
+ARCHIVE_NAME="native-keymap-${PACKAGE_VERSION}-${TARGET_PLATFORM}-${TARGET_ARCH}.tar.gz"
 ARCHIVE_PATH="${PREBUILT_DIR}/${ARCHIVE_NAME}"
 HASH_PATH="${ARCHIVE_PATH}.sha256"
 
