@@ -10,8 +10,7 @@ const os = require('node:os');
 const path = require('node:path');
 const { pipeline } = require('node:stream');
 const { promisify } = require('node:util');
-const tar = require('tar');
-const { spawnSync } = require('node:child_process');
+const { spawn, spawnSync } = require('node:child_process');
 
 const pipelineAsync = promisify(pipeline);
 const PACKAGE_ROOT = path.resolve(__dirname);
@@ -137,7 +136,7 @@ async function downloadPrebuilt(platform, arch) {
     const checksumRaw = await loadChecksumManifest();
     const expectedHash = parseChecksum(checksumRaw, assetName);
     await verifySha256(archivePath, expectedHash);
-    await tar.x({ file: archivePath, cwd: tmpDir });
+    await extractWithSystemTar(archivePath, tmpDir);
     const binaryPath = path.join(tmpDir, 'keymapping.node');
     await fsp.access(binaryPath, fs.constants.R_OK);
 
@@ -157,14 +156,8 @@ async function downloadFile(url, destination) {
 }
 
 async function loadChecksumManifest() {
-  try {
-    const content = await fsp.readFile(LOCAL_CHECKSUM_PATH, 'utf8');
-    return content;
-  } catch (error) {
-    if (error.code && error.code !== 'ENOENT') {
-      throw error;
-    }
-  }
+  const content = await fsp.readFile(LOCAL_CHECKSUM_PATH, 'utf8');
+  return content;
 }
 
 function httpGet(url, redirects = 0) {
@@ -242,6 +235,21 @@ async function verifySha256(filePath, expectedHash) {
   if (digest !== expectedHash) {
     throw new Error(`Checksum mismatch (expected ${expectedHash}, got ${digest})`);
   }
+}
+
+async function extractWithSystemTar(archivePath, destinationDir) {
+  await new Promise((resolve, reject) => {
+    const args = ['-xzf', archivePath, '-C', destinationDir];
+    const child = spawn('tar', args, { stdio: 'inherit' });
+    child.on('error', reject);
+    child.on('close', (code) => {
+      if (code !== 0) {
+        reject(new Error(`tar exited with code ${code}`));
+        return;
+      }
+      resolve();
+    });
+  });
 }
 
 async function cleanup(dirPath) {
