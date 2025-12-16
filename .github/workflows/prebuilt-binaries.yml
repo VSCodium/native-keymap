@@ -277,7 +277,6 @@ jobs:
           else
             echo "NPM token not present, skipping publish"
           fi
-        run: npm publish --access public
       - name: Publish release assets
         uses: softprops/action-gh-release@v2
         with:
