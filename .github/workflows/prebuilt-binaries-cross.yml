@@ -273,7 +273,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.metadata.outputs.tag }}
-          name: native-keymap ${{ needs.metadata.outputs.tag }}
+          name: ${{ needs.metadata.outputs.tag }}
           files: release/*
           draft: false
           prerelease: false
