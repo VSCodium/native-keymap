@@ -10,8 +10,5 @@
   },
   "files.associations": {
     "*.inc": "cpp"
-  },
-  "git.branchProtection": ["main", "release/*"],
-  "git.branchProtectionPrompt": "alwaysCommitToNewBranch",
-  "git.branchRandomName.enable": true
+  }
 }
