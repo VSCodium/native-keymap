@@ -1,4 +1,4 @@
-# OS key mapping node module [![Build Status](https://dev.azure.com/ms/node-native-keymap/_apis/build/status/microsoft.node-native-keymap?branchName=master)](https://dev.azure.com/ms/node-native-keymap/_build/latest?definitionId=138&branchName=master)
+# OS key mapping node module
 Returns what characters are produced by pressing keys with different modifiers on the current system keyboard layout.
 
 ## Installing
@@ -9,13 +9,13 @@ Returns what characters are produced by pressing keys with different modifiers o
 * On FreeBSD: `sudo pkg install libX11 libxkbfile`
 
 ```sh
-npm install native-keymap
+npm install @vscodium/native-keymap
 ```
 
 ## Using
 
 ```javascript
-var keymap = require('native-keymap');
+var keymap = require('@vscodium/native-keymap');
 console.log(keymap.getKeyMap());
 ```
 
@@ -60,19 +60,23 @@ Example output when using German (Swiss) keyboard layout (on Windows):
 ```
 
 ## Supported OSes
- * linux (X11)
- * windows
- * mac
- * freebsd
+
+- linux (X11)
+- windows
+- mac
+- freebsd
 
 ## Known issues
- * only tested from the Electron Main process
+
+- only tested from the Electron Main process
 
 ## Developing
- * `npm install -g node-gyp`
- * `node-gyp configure` (for debugging use `node-gyp configure -d`)
- * `node-gyp build`
- * `npm test` (for debugging change `index.js` to load the node module from the `Debug` folder and press `F5`)
+
+- `npm install -g node-gyp`
+- `node-gyp configure` (for debugging use `node-gyp configure -d`)
+- `node-gyp build`
+- `npm test` (for debugging change `index.js` to load the node module from the `Debug` folder and press `F5`)
 
 ## License
-[MIT](https://github.com/Microsoft/node-native-keymap/blob/master/License.txt)
+
+[MIT](https://github.com/VSCodium/native-keymap/blob/master/LICENSE)

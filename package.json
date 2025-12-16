@@ -1,20 +1,25 @@
 {
-  "name": "native-keymap",
-  "version": "3.3.7",
+  "name": "@vscodium/native-keymap",
+  "version": "3.3.7-258412",
   "description": "Get OS key mapping",
   "main": "index.js",
   "typings": "index.d.ts",
   "scripts": {
+    "release": "release-it --no-increment",
     "test": "node test/test.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Microsoft/node-native-keymap.git"
+    "url": "git+https://github.com/vscodium/native-keymap.git"
   },
   "author": "Microsoft Corporation",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/Microsoft/node-native-keymap/issues"
+  "devDependencies": {
+    "release-it": "^19.1.0"
   },
-  "homepage": "https://github.com/Microsoft/node-native-keymap#readme"
+  "release": {
+    "branches": [
+      "main"
+    ]
+  }
 }
