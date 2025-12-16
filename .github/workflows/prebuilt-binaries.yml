@@ -4,11 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Override the semver used for the release tag (defaults to package.json or published release tag)"
+        description: New version
         required: false
         type: string
       publish:
-        description: "Upload generated binaries to a GitHub release"
+        description: Publish
         required: false
         default: true
         type: boolean
@@ -40,7 +40,7 @@ jobs:
           PUBLISH_INPUT: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.publish || 'true' }}
           RELEASE_TAG: ${{ github.event_name == 'release' && github.event.release.tag_name || '' }}
         run: |
-          set -euo pipefail
+          set -ex
           VERSION="${INPUT_VERSION}"
           TAG=""
 
@@ -145,7 +145,7 @@ jobs:
         run: npx node-gyp rebuild
       - name: Package artifact
         run: |
-          set -euo pipefail
+          set -ex
           mkdir -p "${PREBUILT_DIR}/${TARGET_PLATFORM}-${{ matrix.slug }}"
           cp build/Release/keymapping.node "${PREBUILT_DIR}/${TARGET_PLATFORM}-${{ matrix.slug }}/keymapping.node"
           tar -czf "${PREBUILT_DIR}/native-keymap-${PACKAGE_VERSION}-${TARGET_PLATFORM}-${{ matrix.slug }}.tar.gz" -C "${PREBUILT_DIR}/${TARGET_PLATFORM}-${{ matrix.slug }}" keymapping.node
@@ -186,7 +186,7 @@ jobs:
         run: npx node-gyp rebuild
       - name: Package artifact
         run: |
-          set -euo pipefail
+          set -ex
           mkdir -p "${PREBUILT_DIR}/${TARGET_PLATFORM}-${{ matrix.vscode_arch }}"
           cp build/Release/keymapping.node "${PREBUILT_DIR}/${TARGET_PLATFORM}-${{ matrix.vscode_arch }}/keymapping.node"
           tar -czf "${PREBUILT_DIR}/native-keymap-${PACKAGE_VERSION}-${TARGET_PLATFORM}-${{ matrix.vscode_arch }}.tar.gz" -C "${PREBUILT_DIR}/${TARGET_PLATFORM}-${{ matrix.vscode_arch }}" keymapping.node
@@ -227,7 +227,7 @@ jobs:
         run: npx node-gyp rebuild
       - name: Package artifact
         run: |
-          set -euo pipefail
+          set -ex
           mkdir -p "${PREBUILT_DIR}/${TARGET_PLATFORM}-${{ matrix.arch }}"
           cp build/Release/keymapping.node "${PREBUILT_DIR}/${TARGET_PLATFORM}-${{ matrix.arch }}/keymapping.node"
           tar -czf "${PREBUILT_DIR}/native-keymap-${PACKAGE_VERSION}-${TARGET_PLATFORM}-${{ matrix.arch }}.tar.gz" -C "${PREBUILT_DIR}/${TARGET_PLATFORM}-${{ matrix.arch }}" keymapping.node
@@ -267,7 +267,7 @@ jobs:
           path: collected-artifacts
       - name: Flatten artifact structure
         run: |
-          set -euo pipefail
+          set -ex
           mkdir -p release
           find collected-artifacts -type f -name '*.tar.gz*' -exec cp {} release/ \;
       - name: Publish package to npm
