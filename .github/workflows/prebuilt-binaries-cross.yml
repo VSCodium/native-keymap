@@ -1,0 +1,348 @@
+name: prebuilt-binaries-cross
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Override the semver used for the release tag (defaults to package.json or published release tag)"
+        required: false
+        type: string
+      publish:
+        description: "Upload generated binaries to a GitHub release"
+        required: false
+        default: true
+        type: boolean
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+  actions: read
+
+env:
+  PREBUILT_DIR: prebuilt-artifacts
+
+jobs:
+  metadata:
+    name: Resolve Version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.versions.outputs.version }}
+      tag: ${{ steps.versions.outputs.tag }}
+      should_publish: ${{ steps.versions.outputs.should_publish }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: versions
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || '' }}
+          PUBLISH_INPUT: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.publish || 'true' }}
+          RELEASE_TAG: ${{ github.event_name == 'release' && github.event.release.tag_name || '' }}
+        run: |
+          set -euo pipefail
+          VERSION="${INPUT_VERSION}"
+          TAG=""
+
+          if [ -z "$VERSION" ]; then
+            if [ "$EVENT_NAME" = "release" ]; then
+              TAG="$RELEASE_TAG"
+              if [ -z "$TAG" ]; then
+                TAG="$GITHUB_REF_NAME"
+              fi
+              TAG="${TAG#refs/tags/}"
+              if [[ "$TAG" != v* ]]; then
+                TAG="v${TAG}"
+              fi
+              VERSION="${TAG#v}"
+            else
+              VERSION=$(node -p "require('./package.json').version")
+              TAG="v${VERSION}"
+            fi
+          else
+            if [[ "$VERSION" == v* ]]; then
+              TAG="$VERSION"
+              VERSION="${VERSION#v}"
+            else
+              TAG="v${VERSION}"
+            fi
+          fi
+
+          if [ -z "$VERSION" ]; then
+            echo "Unable to determine version" >&2
+            exit 1
+          fi
+
+          SHOULD_PUBLISH="false"
+          if [ "$EVENT_NAME" = "release" ]; then
+            SHOULD_PUBLISH="true"
+          else
+            case "${PUBLISH_INPUT,,}" in
+              true|1|yes)
+                SHOULD_PUBLISH="true"
+                ;;
+            esac
+          fi
+
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "should_publish=${SHOULD_PUBLISH}" >> "$GITHUB_OUTPUT"
+
+  linux-cross:
+    name: Linux cross (${{ matrix.slug }})
+    needs: metadata
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - slug: x64
+            npm_arch: x64
+            deb_arch: amd64
+            cc: gcc
+            cxx: g++
+            ar: ar
+            ranlib: ranlib
+            toolchain_packages: ""
+          - slug: arm64
+            npm_arch: arm64
+            deb_arch: arm64
+            cc: aarch64-linux-gnu-gcc
+            cxx: aarch64-linux-gnu-g++
+            ar: aarch64-linux-gnu-ar
+            ranlib: aarch64-linux-gnu-ranlib
+            toolchain_packages: crossbuild-essential-arm64
+          - slug: armhf
+            npm_arch: arm
+            deb_arch: armhf
+            cc: arm-linux-gnueabihf-gcc
+            cxx: arm-linux-gnueabihf-g++
+            ar: arm-linux-gnueabihf-ar
+            ranlib: arm-linux-gnueabihf-ranlib
+            toolchain_packages: crossbuild-essential-armhf
+          - slug: riscv64
+            npm_arch: riscv64
+            deb_arch: riscv64
+            cc: riscv64-linux-gnu-gcc
+            cxx: riscv64-linux-gnu-g++
+            ar: riscv64-linux-gnu-ar
+            ranlib: riscv64-linux-gnu-ranlib
+            toolchain_packages: "gcc-riscv64-linux-gnu g++-riscv64-linux-gnu"
+          - slug: loong64
+            npm_arch: loong64
+            deb_arch: loongarch64
+            cc: loongarch64-linux-gnu-gcc
+            cxx: loongarch64-linux-gnu-g++
+            ar: loongarch64-linux-gnu-ar
+            ranlib: loongarch64-linux-gnu-ranlib
+            toolchain_packages: "gcc-loongarch64-linux-gnu g++-loongarch64-linux-gnu"
+          - slug: ppc64le
+            npm_arch: ppc64
+            deb_arch: ppc64el
+            cc: powerpc64le-linux-gnu-gcc
+            cxx: powerpc64le-linux-gnu-g++
+            ar: powerpc64le-linux-gnu-ar
+            ranlib: powerpc64le-linux-gnu-ranlib
+            toolchain_packages: crossbuild-essential-ppc64el
+          - slug: s390x
+            npm_arch: s390x
+            deb_arch: s390x
+            cc: s390x-linux-gnu-gcc
+            cxx: s390x-linux-gnu-g++
+            ar: s390x-linux-gnu-ar
+            ranlib: s390x-linux-gnu-ranlib
+            toolchain_packages: crossbuild-essential-s390x
+    env:
+      TARGET_PLATFORM: linux
+      PACKAGE_VERSION: ${{ needs.metadata.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+      - name: Install cross toolchains and headers
+        run: |
+          set -euo pipefail
+          if [ "${{ matrix.deb_arch }}" != "amd64" ]; then
+            dpkg --add-architecture ${{ matrix.deb_arch }}
+          fi
+          apt-get update
+          PKGS="build-essential python3 pkg-config ninja-build libx11-dev:${{ matrix.deb_arch }} libxkbfile-dev:${{ matrix.deb_arch }} libkrb5-dev:${{ matrix.deb_arch }}"
+          if [ -n "${{ matrix.toolchain_packages }}" ]; then
+            PKGS="$PKGS ${{ matrix.toolchain_packages }}"
+          fi
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends $PKGS
+      - name: Install npm dependencies
+        run: npm install --no-fund --no-audit --ignore-scripts
+      - name: Build native module (cross)
+        env:
+          npm_config_build_from_source: true
+          npm_config_arch: ${{ matrix.npm_arch }}
+          npm_config_target_arch: ${{ matrix.npm_arch }}
+          CC: ${{ matrix.cc }}
+          CXX: ${{ matrix.cxx }}
+          AR: ${{ matrix.ar }}
+          RANLIB: ${{ matrix.ranlib }}
+        run: |
+          set -euo pipefail
+          export PKG_CONFIG_PATH=/usr/lib/${{ matrix.deb_arch }}-linux-gnu/pkgconfig:/usr/lib/${{ matrix.deb_arch }}/pkgconfig:/usr/lib/pkgconfig:$PKG_CONFIG_PATH
+          export PKG_CONFIG_LIBDIR=/usr/lib/${{ matrix.deb_arch }}-linux-gnu/pkgconfig:/usr/share/pkgconfig
+          npx node-gyp rebuild --arch=${{ matrix.npm_arch }}
+      - name: Package artifact
+        run: |
+          set -euo pipefail
+          mkdir -p "${PREBUILT_DIR}/${TARGET_PLATFORM}-${{ matrix.slug }}"
+          cp build/Release/keymapping.node "${PREBUILT_DIR}/${TARGET_PLATFORM}-${{ matrix.slug }}/keymapping.node"
+          tar -czf "${PREBUILT_DIR}/native-keymap-${PACKAGE_VERSION}-${TARGET_PLATFORM}-${{ matrix.slug }}.tar.gz" -C "${PREBUILT_DIR}/${TARGET_PLATFORM}-${{ matrix.slug }}" keymapping.node
+          (cd "${PREBUILT_DIR}" && sha256sum "native-keymap-${PACKAGE_VERSION}-${TARGET_PLATFORM}-${{ matrix.slug }}.tar.gz" > "native-keymap-${PACKAGE_VERSION}-${TARGET_PLATFORM}-${{ matrix.slug }}.tar.gz.sha256")
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-keymap-${{ env.TARGET_PLATFORM }}-${{ matrix.slug }}
+          path: |
+            ${{ env.PREBUILT_DIR }}/native-keymap-${{ env.PACKAGE_VERSION }}-${{ env.TARGET_PLATFORM }}-${{ matrix.slug }}.tar.gz
+            ${{ env.PREBUILT_DIR }}/native-keymap-${{ env.PACKAGE_VERSION }}-${{ env.TARGET_PLATFORM }}-${{ matrix.slug }}.tar.gz.sha256
+
+  macos-cross:
+    name: macOS cross (${{ matrix.label }})
+    needs: metadata
+    runs-on: macos-13
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: x64
+            npm_arch: x64
+            clang_arch: x86_64
+            deployment_target: "10.13"
+          - label: arm64
+            npm_arch: arm64
+            clang_arch: arm64
+            deployment_target: "11.0"
+    env:
+      TARGET_PLATFORM: darwin
+      PACKAGE_VERSION: ${{ needs.metadata.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+      - name: Install npm dependencies
+        run: npm install --no-fund --no-audit --ignore-scripts
+      - name: Build native module (cross)
+        env:
+          npm_config_build_from_source: true
+          npm_config_arch: ${{ matrix.npm_arch }}
+          npm_config_target_arch: ${{ matrix.npm_arch }}
+          CFLAGS: "-arch ${{ matrix.clang_arch }} -mmacosx-version-min=${{ matrix.deployment_target }}"
+          CXXFLAGS: "-arch ${{ matrix.clang_arch }} -mmacosx-version-min=${{ matrix.deployment_target }}"
+          LDFLAGS: "-arch ${{ matrix.clang_arch }} -mmacosx-version-min=${{ matrix.deployment_target }}"
+        run: |
+          set -euo pipefail
+          export SDKROOT=$(xcrun --sdk macosx --show-sdk-path)
+          npx node-gyp rebuild --arch=${{ matrix.npm_arch }}
+      - name: Package artifact
+        run: |
+          set -euo pipefail
+          mkdir -p "${PREBUILT_DIR}/${TARGET_PLATFORM}-${{ matrix.label }}"
+          cp build/Release/keymapping.node "${PREBUILT_DIR}/${TARGET_PLATFORM}-${{ matrix.label }}/keymapping.node"
+          tar -czf "${PREBUILT_DIR}/native-keymap-${PACKAGE_VERSION}-${TARGET_PLATFORM}-${{ matrix.label }}.tar.gz" -C "${PREBUILT_DIR}/${TARGET_PLATFORM}-${{ matrix.label }}" keymapping.node
+          (cd "${PREBUILT_DIR}" && shasum -a 256 "native-keymap-${PACKAGE_VERSION}-${TARGET_PLATFORM}-${{ matrix.label }}.tar.gz" > "native-keymap-${PACKAGE_VERSION}-${TARGET_PLATFORM}-${{ matrix.label }}.tar.gz.sha256")
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-keymap-${{ env.TARGET_PLATFORM }}-${{ matrix.label }}
+          path: |
+            ${{ env.PREBUILT_DIR }}/native-keymap-${{ env.PACKAGE_VERSION }}-${{ env.TARGET_PLATFORM }}-${{ matrix.label }}.tar.gz
+            ${{ env.PREBUILT_DIR }}/native-keymap-${{ env.PACKAGE_VERSION }}-${{ env.TARGET_PLATFORM }}-${{ matrix.label }}.tar.gz.sha256
+
+  windows-cross:
+    name: Windows cross (${{ matrix.arch }})
+    needs: metadata
+    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            vs_arch: x64
+          - arch: arm64
+            vs_arch: amd64_arm64
+    env:
+      TARGET_PLATFORM: win32
+      PACKAGE_VERSION: ${{ needs.metadata.outputs.version }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+      - name: Install npm dependencies
+        run: npm install --no-fund --no-audit --ignore-scripts
+      - name: Setup MSVC toolchain
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{ matrix.vs_arch }}
+      - name: Build native module (cross)
+        env:
+          npm_config_build_from_source: true
+          npm_config_arch: ${{ matrix.arch }}
+          npm_config_target_arch: ${{ matrix.arch }}
+        run: npx node-gyp rebuild --arch=${{ matrix.arch }}
+      - name: Package artifact
+        run: |
+          set -euo pipefail
+          mkdir -p "${PREBUILT_DIR}/${TARGET_PLATFORM}-${{ matrix.arch }}"
+          cp build/Release/keymapping.node "${PREBUILT_DIR}/${TARGET_PLATFORM}-${{ matrix.arch }}/keymapping.node"
+          tar -czf "${PREBUILT_DIR}/native-keymap-${PACKAGE_VERSION}-${TARGET_PLATFORM}-${{ matrix.arch }}.tar.gz" -C "${PREBUILT_DIR}/${TARGET_PLATFORM}-${{ matrix.arch }}" keymapping.node
+      - name: Generate checksums
+        shell: pwsh
+        run: |
+          $target = "${env:PREBUILT_DIR}\native-keymap-${env:PACKAGE_VERSION}-${env:TARGET_PLATFORM}-${{ matrix.arch }}.tar.gz"
+          $hash = (Get-FileHash -Path $target -Algorithm SHA256).Hash
+          Set-Content -Path "$target.sha256" -Value "$hash  $(Split-Path -Leaf $target)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-keymap-${{ env.TARGET_PLATFORM }}-${{ matrix.arch }}
+          path: |
+            ${{ env.PREBUILT_DIR }}/native-keymap-${{ env.PACKAGE_VERSION }}-${{ env.TARGET_PLATFORM }}-${{ matrix.arch }}.tar.gz
+            ${{ env.PREBUILT_DIR }}/native-keymap-${{ env.PACKAGE_VERSION }}-${{ env.TARGET_PLATFORM }}-${{ matrix.arch }}.tar.gz.sha256
+
+  publish:
+    name: Publish Release
+    needs:
+      - metadata
+      - linux-cross
+      - macos-cross
+      - windows-cross
+    if: needs.metadata.outputs.should_publish == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Node.js for npm publish
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          registry-url: https://registry.npmjs.org
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: collected-artifacts
+      - name: Flatten artifact structure
+        run: |
+          set -euo pipefail
+          mkdir -p release
+          find collected-artifacts -type f -name '*.tar.gz*' -exec cp {} release/ \;
+      - name: Publish package to npm
+        if: secrets.NPM_TOKEN != ''
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public
+      - name: Publish release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.metadata.outputs.tag }}
+          name: native-keymap ${{ needs.metadata.outputs.tag }}
+          files: release/*
+          draft: false
+          prerelease: false
