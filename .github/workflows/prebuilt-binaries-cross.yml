@@ -99,6 +99,7 @@ jobs:
           - slug: x64
             npm_arch: x64
             deb_arch: amd64
+            gnu_triplet: x86_64-linux-gnu
             cc: gcc
             cxx: g++
             ar: ar
@@ -107,6 +108,7 @@ jobs:
           - slug: arm64
             npm_arch: arm64
             deb_arch: arm64
+            gnu_triplet: aarch64-linux-gnu
             cc: aarch64-linux-gnu-gcc
             cxx: aarch64-linux-gnu-g++
             ar: aarch64-linux-gnu-ar
@@ -115,6 +117,7 @@ jobs:
           - slug: armhf
             npm_arch: arm
             deb_arch: armhf
+            gnu_triplet: arm-linux-gnueabihf
             cc: arm-linux-gnueabihf-gcc
             cxx: arm-linux-gnueabihf-g++
             ar: arm-linux-gnueabihf-ar
@@ -123,6 +126,7 @@ jobs:
           - slug: riscv64
             npm_arch: riscv64
             deb_arch: riscv64
+            gnu_triplet: riscv64-linux-gnu
             cc: riscv64-linux-gnu-gcc
             cxx: riscv64-linux-gnu-g++
             ar: riscv64-linux-gnu-ar
@@ -131,6 +135,7 @@ jobs:
           - slug: loong64
             npm_arch: loong64
             deb_arch: loongarch64
+            gnu_triplet: loongarch64-linux-gnu
             cc: loongarch64-linux-gnu-gcc
             cxx: loongarch64-linux-gnu-g++
             ar: loongarch64-linux-gnu-ar
@@ -139,6 +144,7 @@ jobs:
           - slug: ppc64le
             npm_arch: ppc64
             deb_arch: ppc64el
+            gnu_triplet: powerpc64le-linux-gnu
             cc: powerpc64le-linux-gnu-gcc
             cxx: powerpc64le-linux-gnu-g++
             ar: powerpc64le-linux-gnu-ar
@@ -147,6 +153,7 @@ jobs:
           - slug: s390x
             npm_arch: s390x
             deb_arch: s390x
+            gnu_triplet: s390x-linux-gnu
             cc: s390x-linux-gnu-gcc
             cxx: s390x-linux-gnu-g++
             ar: s390x-linux-gnu-ar
@@ -185,8 +192,9 @@ jobs:
           RANLIB: ${{ matrix.ranlib }}
         run: |
           set -ex
-          export PKG_CONFIG_PATH=/usr/lib/${{ matrix.deb_arch }}-linux-gnu/pkgconfig:/usr/lib/${{ matrix.deb_arch }}/pkgconfig:/usr/lib/pkgconfig:$PKG_CONFIG_PATH
-          export PKG_CONFIG_LIBDIR=/usr/lib/${{ matrix.deb_arch }}-linux-gnu/pkgconfig:/usr/share/pkgconfig
+          TRIPLET="${{ matrix.gnu_triplet }}"
+          export PKG_CONFIG_PATH="/usr/lib/${TRIPLET}/pkgconfig:/usr/lib/${TRIPLET}/lib/pkgconfig:/usr/share/pkgconfig:${PKG_CONFIG_PATH:-}"
+          export PKG_CONFIG_LIBDIR="/usr/lib/${TRIPLET}/pkgconfig:/usr/lib/${TRIPLET}/lib/pkgconfig:/usr/share/pkgconfig"
           npx node-gyp rebuild --arch=${{ matrix.npm_arch }}
       - name: Package artifact
         run: |
