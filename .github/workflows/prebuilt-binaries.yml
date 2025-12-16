@@ -160,15 +160,11 @@ jobs:
   macos:
     name: macOS (${{ matrix.vscode_arch }})
     needs: metadata
-    runs-on: ${{ matrix.runner }}
+    runs-on: macos-14
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - runner: macos-13
-            vscode_arch: x64
-          - runner: [self-hosted, macOS, ARM64]
-            vscode_arch: arm64
+        arch: [x64, arm64]
     env:
       TARGET_PLATFORM: darwin
       PACKAGE_VERSION: ${{ needs.metadata.outputs.version }}
