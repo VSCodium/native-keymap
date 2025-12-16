@@ -1,6 +1,6 @@
 {
   "name": "@vscodium/native-keymap",
-  "version": "3.3.7-258423",
+  "version": "3.3.7-258424",
   "description": "Get OS key mapping",
   "main": "index.js",
   "typings": "index.d.ts",
