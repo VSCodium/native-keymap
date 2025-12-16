@@ -56,13 +56,25 @@ function computeDownloadIntent() {
 }
 
 function shouldForceSourceBuild() {
-  return isTruthy(process.env.NATIVE_KEYMAP_SKIP_PREBUILT) ||
-    isTruthy(process.env.npm_config_build_from_source) ||
-    isTruthy(process.env.BUILD_FROM_SOURCE) ||
-    isTruthy(process.env.npm_config_build_from_source_native_keymap);
+  if (isFalse(process.env.npm_config_build_from_source_native_keymap)) {
+    return false;
+  }
+
+  return isTrue(process.env.NATIVE_KEYMAP_SKIP_PREBUILT) ||
+    isTrue(process.env.npm_config_build_from_source) ||
+    isTrue(process.env.BUILD_FROM_SOURCE) ||
+    isTrue(process.env.npm_config_build_from_source_native_keymap);
 }
 
-function isTruthy(value) {
+function isFalse(value) {
+  if (!value) {
+    return false;
+  }
+  const normalized = String(value).toLowerCase();
+  return normalized === '0' || normalized === 'false' || normalized === 'no';
+}
+
+function isTrue(value) {
   if (!value) {
     return false;
   }
