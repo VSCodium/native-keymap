@@ -1,4 +1,4 @@
-name: prebuilt-binaries
+name: prebuilt-binaries-host
 
 on:
   workflow_dispatch:
