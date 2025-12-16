@@ -12,8 +12,9 @@ on:
         required: false
         default: true
         type: boolean
-  release:
-    types: [published]
+  push:
+    tags:
+      - "*"
 
 permissions:
   contents: write
@@ -270,7 +271,7 @@ jobs:
           mkdir -p release
           find collected-artifacts -type f -name '*.tar.gz*' -exec cp {} release/ \;
       - name: Publish package to npm
-        if: secrets.NPM_TOKEN != ''
+        if: ${{ secrets.NPM_TOKEN != '' }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --access public
