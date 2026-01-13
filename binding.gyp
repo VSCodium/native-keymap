@@ -7,7 +7,7 @@
         "src/keymapping.cc"
       ],
       'cflags': [
-        '-O2', '-D_FORTIFY_SOURCE=2'
+        '-O2', '-fstack-protector-strong'
       ],
       'msvs_configuration_attributes': {
         'SpectreMitigation': 'Spectre'
