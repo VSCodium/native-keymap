@@ -17,7 +17,8 @@ on:
       - "*"
 
 permissions:
-  contents: write
+  id-token: write   # NPM
+  contents: write   # Release
   actions: read
 
 env:
@@ -32,7 +33,7 @@ jobs:
       tag: ${{ steps.versions.outputs.tag }}
       should_publish: ${{ steps.versions.outputs.should_publish }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - id: versions
         env:
           EVENT_NAME: ${{ github.event_name }}
@@ -76,8 +77,8 @@ jobs:
       TARGET_PLATFORM: linux
       PACKAGE_VERSION: ${{ needs.metadata.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
       - name: Install system dependencies
@@ -94,7 +95,7 @@ jobs:
         run: ./.github/scripts/linux/verify-elf.sh '${{ matrix.slug }}' build/Release/keymapping.node
       - name: Package artifact
         run: ./.github/scripts/package-tar.sh '${{ env.TARGET_PLATFORM }}' '${{ matrix.slug }}' '${{ env.PACKAGE_VERSION }}'
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: native-keymap-${{ env.TARGET_PLATFORM }}-${{ matrix.slug }}
           path: |
@@ -113,8 +114,8 @@ jobs:
       TARGET_PLATFORM: darwin
       PACKAGE_VERSION: ${{ needs.metadata.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
       - name: Install npm dependencies
@@ -128,7 +129,7 @@ jobs:
         run: ./.github/scripts/macos/verify-macho.sh '${{ matrix.arch }}' build/Release/keymapping.node
       - name: Package artifact
         run: ./.github/scripts/package-tar.sh '${{ env.TARGET_PLATFORM }}' '${{ matrix.arch }}' '${{ env.PACKAGE_VERSION }}'
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: native-keymap-${{ env.TARGET_PLATFORM }}-${{ matrix.arch }}
           path: |
@@ -150,8 +151,8 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
       - name: Install npm dependencies
@@ -166,7 +167,7 @@ jobs:
         run: ./.github/scripts/windows/verify-pe.sh '${{ matrix.arch }}' 'build/Release/keymapping.node'
       - name: Package artifact
         run: ./.github/scripts/package-tar.sh '${{ env.TARGET_PLATFORM }}' '${{ matrix.arch }}' '${{ env.PACKAGE_VERSION }}'
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: native-keymap-${{ env.TARGET_PLATFORM }}-${{ matrix.arch }}
           path: |
@@ -184,22 +185,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Setup Node.js for npm publish
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
           registry-url: https://registry.npmjs.org
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           path: collected-artifacts
       - name: Flatten artifact structure
         run: ./.github/scripts/flatten-artifacts.sh
-      - name: Publish package to npm
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: ./.github/scripts/npm-publish.sh
+      - name: Publish to NPM Registry
+        run: npm publish --access=public
       - name: Publish release assets
         uses: softprops/action-gh-release@v2
         with:
