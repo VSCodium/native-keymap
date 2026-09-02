@@ -12,10 +12,10 @@
     "release": "release-it --no-increment",
     "test": "node test/test.js"
   },
-  "homepage": "https://github.com/vscodium/native-keymap",
+  "homepage": "https://github.com/VSCodium/native-keymap",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/vscodium/native-keymap.git"
+    "url": "git+https://github.com/VSCodium/native-keymap.git"
   },
   "author": "Microsoft Corporation",
   "license": "MIT",
