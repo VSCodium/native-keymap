@@ -1,0 +1,7 @@
+rules:
+  superfluous-actions:
+    ignore:
+      # allows `softprops/action-gh-release` action
+      - prebuilt-binaries-cross.yml:286
+      - prebuilt-binaries-host.yml:216
+

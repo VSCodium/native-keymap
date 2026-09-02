@@ -5,6 +5,9 @@
   "main": "index.js",
   "typings": "index.d.ts",
   "scripts": {
+    "ci:lint": "zizmor .",
+		"ci:lint:fix": "zizmor . --fix=all",
+    "ci:update": "pinact run -min-age 7 -update",
     "install": "node install.js",
     "release": "release-it --no-increment",
     "test": "node test/test.js"
