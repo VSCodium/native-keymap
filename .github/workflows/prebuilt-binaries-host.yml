@@ -96,13 +96,14 @@ jobs:
       - name: Verify binary architecture
         run: ./.github/scripts/linux/verify-elf.sh '${{ matrix.slug }}' build/Release/keymapping.node
       - name: Package artifact
-        run: ./.github/scripts/package-tar.sh '${{ env.TARGET_PLATFORM }}' '${{ matrix.slug }}' '${PACKAGE_VERSION}'
+        run: ./.github/scripts/package-tar.sh "${TARGET_PLATFORM}" '${{ matrix.slug }}' "${PACKAGE_VERSION}"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: native-keymap-${{ env.TARGET_PLATFORM }}-${{ matrix.slug }}
           path: |
             ${{ env.PREBUILT_DIR }}/native-keymap-${{ env.PACKAGE_VERSION }}-${{ env.TARGET_PLATFORM }}-${{ matrix.slug }}.tar.gz
             ${{ env.PREBUILT_DIR }}/native-keymap-${{ env.PACKAGE_VERSION }}-${{ env.TARGET_PLATFORM }}-${{ matrix.slug }}.tar.gz.sha256
+          if-no-files-found: error
 
   macos:
     name: macOS (${{ matrix.arch }})
@@ -133,13 +134,14 @@ jobs:
       - name: Verify binary architecture
         run: ./.github/scripts/macos/verify-macho.sh '${{ matrix.arch }}' build/Release/keymapping.node
       - name: Package artifact
-        run: ./.github/scripts/package-tar.sh '${{ env.TARGET_PLATFORM }}' '${{ matrix.arch }}' '${PACKAGE_VERSION}'
+        run: ./.github/scripts/package-tar.sh "${TARGET_PLATFORM}" '${{ matrix.arch }}' "${PACKAGE_VERSION}"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: native-keymap-${{ env.TARGET_PLATFORM }}-${{ matrix.arch }}
           path: |
             ${{ env.PREBUILT_DIR }}/native-keymap-${{ env.PACKAGE_VERSION }}-${{ env.TARGET_PLATFORM }}-${{ matrix.arch }}.tar.gz
             ${{ env.PREBUILT_DIR }}/native-keymap-${{ env.PACKAGE_VERSION }}-${{ env.TARGET_PLATFORM }}-${{ matrix.arch }}.tar.gz.sha256
+          if-no-files-found: error
 
   windows:
     name: Windows (${{ matrix.arch }})
@@ -174,13 +176,14 @@ jobs:
       - name: Verify binary architecture
         run: ./.github/scripts/windows/verify-pe.sh '${{ matrix.arch }}' 'build/Release/keymapping.node'
       - name: Package artifact
-        run: ./.github/scripts/package-tar.sh '${{ env.TARGET_PLATFORM }}' '${{ matrix.arch }}' '${PACKAGE_VERSION}'
+        run: ./.github/scripts/package-tar.sh "${TARGET_PLATFORM}" '${{ matrix.arch }}' "${PACKAGE_VERSION}"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: native-keymap-${{ env.TARGET_PLATFORM }}-${{ matrix.arch }}
           path: |
             ${{ env.PREBUILT_DIR }}/native-keymap-${{ env.PACKAGE_VERSION }}-${{ env.TARGET_PLATFORM }}-${{ matrix.arch }}.tar.gz
             ${{ env.PREBUILT_DIR }}/native-keymap-${{ env.PACKAGE_VERSION }}-${{ env.TARGET_PLATFORM }}-${{ matrix.arch }}.tar.gz.sha256
+          if-no-files-found: error
 
   publish:
     name: Publish Release
