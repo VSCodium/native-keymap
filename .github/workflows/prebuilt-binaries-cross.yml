@@ -288,7 +288,8 @@ jobs:
     runs-on: ubuntu-latest
     environment: publish
     permissions:
-      contents: write
+      id-token: write   # NPM
+      contents: write   # Release
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -298,7 +299,7 @@ jobs:
       - name: Setup Node.js for npm publish
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version-file: '.nvmrc'
+          node-version: latest
           registry-url: https://registry.npmjs.org
           package-manager-cache: false
 
@@ -311,9 +312,7 @@ jobs:
         run: ./.github/scripts/flatten-artifacts.sh
 
       - name: Publish package to npm
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: ./.github/scripts/npm-publish.sh
+        run: npm publish --provenance --access=public
 
       - name: Publish release assets
         uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
